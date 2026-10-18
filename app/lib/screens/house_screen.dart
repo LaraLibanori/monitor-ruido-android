@@ -3,11 +3,13 @@
 // =============================================
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../noise_ui.dart';
+import '../settings.dart';
 
 class HouseScreen extends StatefulWidget {
   const HouseScreen({super.key, required this.api, required this.house});
@@ -32,8 +34,25 @@ class _HouseScreenState extends State<HouseScreen> {
   void initState() {
     super.initState();
     _house = widget.house;
+    _loadCachedHistory();
     _load();
     _timer = Timer.periodic(_refreshEvery, (_) => _load());
+  }
+
+  Future<void> _loadCachedHistory() async {
+    final cached = await Settings.loadHistory(_house.sensorId);
+    if (!mounted || cached == null) return;
+    try {
+      final decoded = jsonDecode(cached.json);
+      if (decoded is Map) {
+        setState(() {
+          _history = History.fromJson(Map<String, dynamic>.from(decoded));
+          _error = 'Histórico local de ${timeAgo(DateTime.now().difference(cached.savedAt).inSeconds)}.';
+        });
+      }
+    } on FormatException {
+      // Cache inválido será substituído na próxima resposta válida.
+    }
   }
 
   @override
@@ -46,7 +65,9 @@ class _HouseScreenState extends State<HouseScreen> {
     if (_loading) return;
     _loading = true;
     try {
-      final history = await widget.api.history(_house.sensorId);
+      final historyPayload = await widget.api.historyJson(_house.sensorId);
+      final history = History.fromJson(historyPayload);
+      await Settings.saveHistory(_house.sensorId, jsonEncode(historyPayload), DateTime.now());
       final overview = await widget.api.overview();
       House updated = _house;
       for (final h in overview.houses) {

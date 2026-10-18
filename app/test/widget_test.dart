@@ -40,4 +40,24 @@ void main() {
     expect(overview.houses.first.level, 'alto');
     expect(overview.houses.last.secondsSinceLast, isNull);
   });
+
+  test('tolera campos opcionais e tipos inválidos sem quebrar o parsing', () {
+    final overview = Overview.fromJson({
+      'silence': {'rules': null},
+      'houses': [
+        {
+          'sensor_id': 123,
+          'online': 'não',
+          'last_reading': {'rms': '12.5', 'noise_level': 99},
+          'today': {'readings': '4'},
+        },
+        'registro inválido',
+      ],
+    });
+
+    expect(overview.houses, hasLength(1));
+    expect(overview.houses.single.sensorId, '');
+    expect(overview.houses.single.rms, 12.5);
+    expect(overview.houses.single.todayReadings, 4);
+  });
 }

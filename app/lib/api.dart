@@ -20,10 +20,17 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-int _toInt(dynamic value) => value == null ? 0 : (value as num).toInt();
-double? _toDouble(dynamic value) => value == null ? null : (value as num).toDouble();
-Map<String, dynamic> _map(dynamic value) =>
-    value is Map<String, dynamic> ? value : const <String, dynamic>{};
+int _toInt(dynamic value) => value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+double? _toDouble(dynamic value) => value is num ? value.toDouble() : double.tryParse('$value');
+String? _toString(dynamic value) => value is String ? value : null;
+List<dynamic> _list(dynamic value) => value is List ? value : const <dynamic>[];
+Map<String, dynamic> _map(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) {
+    return value.map<String, dynamic>((key, value) => MapEntry('$key', value));
+  }
+  return const <String, dynamic>{};
+}
 
 // ---------------------------------------------
 // Modelos
@@ -37,7 +44,7 @@ class NextChange {
   final bool silenceStarts; // true = o silêncio vai começar
 
   factory NextChange.fromJson(Map<String, dynamic> json) => NextChange(
-        at: (json['at'] as String?) ?? '',
+        at: _toString(json['at']) ?? '',
         dayOffset: _toInt(json['day_offset']),
         silenceStarts: json['silence_starts'] == true,
       );
@@ -61,9 +68,9 @@ class SilenceStatus {
     final next = json['next_change'];
     return SilenceStatus(
       active: json['is_silence_period'] == true,
-      next: next is Map<String, dynamic> ? NextChange.fromJson(next) : null,
-      weekdayRule: (rules['weekday'] as String?) ?? '',
-      weekendRule: (rules['weekend'] as String?) ?? '',
+      next: next is Map ? NextChange.fromJson(_map(next)) : null,
+      weekdayRule: _toString(rules['weekday']) ?? '',
+      weekendRule: _toString(rules['weekend']) ?? '',
     );
   }
 }
@@ -95,16 +102,16 @@ class House {
 
   factory House.fromJson(Map<String, dynamic> json) {
     final last = json['last_reading'];
-    final lastMap = last is Map<String, dynamic> ? last : null;
+    final lastMap = last == null ? null : _map(last);
     final today = _map(json['today']);
     final seconds = json['seconds_since_last'];
     return House(
-      sensorId: json['sensor_id'] as String,
-      name: (json['name'] as String?) ?? (json['sensor_id'] as String),
-      location: (json['location'] as String?) ?? '',
+      sensorId: _toString(json['sensor_id']) ?? '',
+      name: _toString(json['name']) ?? (_toString(json['sensor_id']) ?? ''),
+      location: _toString(json['location']) ?? '',
       online: json['online'] == true,
       secondsSinceLast: seconds == null ? null : _toInt(seconds),
-      level: lastMap?['noise_level'] as String?,
+      level: _toString(lastMap?['noise_level']),
       rms: _toDouble(lastMap?['rms']),
       readingInSilence: lastMap?['is_silence_period'] == true,
       todayReadings: _toInt(today['readings']),
@@ -121,8 +128,9 @@ class Overview {
 
   factory Overview.fromJson(Map<String, dynamic> json) => Overview(
         silence: SilenceStatus.fromJson(_map(json['silence'])),
-        houses: ((json['houses'] as List<dynamic>?) ?? const <dynamic>[])
-            .map((item) => House.fromJson(item as Map<String, dynamic>))
+        houses: _list(json['houses'])
+            .whereType<Map>()
+            .map((item) => House.fromJson(_map(item)))
             .toList(),
       );
 }
@@ -151,7 +159,7 @@ class HourBucket {
         isSilence: json['is_silence'] == true,
         readings: _toInt(json['readings']),
         avgRms: _toDouble(json['avg_rms']),
-        worstLevel: json['worst_level'] as String?,
+        worstLevel: _toString(json['worst_level']),
         loud: _toInt(json['loud']),
         loudInSilence: _toInt(json['loud_in_silence']),
       );
@@ -180,10 +188,11 @@ class History {
     final summary = _map(json['summary']);
     final loudest = summary['loudest_hour'];
     return History(
-      name: (json['name'] as String?) ?? '',
-      date: (json['date'] as String?) ?? '',
-      buckets: ((json['buckets'] as List<dynamic>?) ?? const <dynamic>[])
-          .map((item) => HourBucket.fromJson(item as Map<String, dynamic>))
+      name: _toString(json['name']) ?? '',
+      date: _toString(json['date']) ?? '',
+      buckets: _list(json['buckets'])
+          .whereType<Map>()
+          .map((item) => HourBucket.fromJson(_map(item)))
           .toList(),
       readings: _toInt(summary['readings']),
       loud: _toInt(summary['loud']),
@@ -237,14 +246,19 @@ class ApiClient {
   }
 
   Future<Overview> overview() async {
-    final json = await _get('/api/app/overview');
+    final json = await overviewJson();
     return Overview.fromJson(json);
   }
 
+  Future<Map<String, dynamic>> overviewJson() => _get('/api/app/overview');
+
   Future<History> history(String sensorId) async {
-    final json = await _get('/api/app/houses/${Uri.encodeComponent(sensorId)}/history');
+    final json = await historyJson(sensorId);
     return History.fromJson(json);
   }
+
+  Future<Map<String, dynamic>> historyJson(String sensorId) =>
+      _get('/api/app/houses/${Uri.encodeComponent(sensorId)}/history');
 
   Future<Map<String, dynamic>> _get(String path) async {
     final uri = Uri.tryParse('$baseUrl$path');
