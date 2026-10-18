@@ -3,11 +3,13 @@
 // =============================================
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../noise_ui.dart';
+import '../settings.dart';
 import 'connect_screen.dart';
 import 'help_screen.dart';
 import 'house_screen.dart';
@@ -32,8 +34,25 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadCached();
     _load();
     _timer = Timer.periodic(_refreshEvery, (_) => _load());
+  }
+
+  Future<void> _loadCached() async {
+    final cached = await Settings.loadOverview();
+    if (!mounted || cached == null) return;
+    try {
+      final decoded = jsonDecode(cached.json);
+      if (decoded is Map) {
+        setState(() {
+          _data = Overview.fromJson(Map<String, dynamic>.from(decoded));
+          _error = 'Última atualização local: ${timeAgo(DateTime.now().difference(cached.savedAt).inSeconds)}.';
+        });
+      }
+    } on FormatException {
+      // Cache inválido será substituído na próxima resposta válida.
+    }
   }
 
   @override
@@ -46,7 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_loading) return;
     _loading = true;
     try {
-      final data = await widget.api.overview();
+      final payload = await widget.api.overviewJson();
+      final data = Overview.fromJson(payload);
+      await Settings.saveOverview(jsonEncode(payload), DateTime.now());
       if (mounted) {
         setState(() {
           _data = data;
