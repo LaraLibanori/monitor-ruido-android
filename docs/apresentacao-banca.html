@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitor de Ruído IoT — Apresentação</title>
+  <style>
+    :root {
+      --navy: #172b4d;
+      --blue: #2f6fed;
+      --teal: #1b9aaa;
+      --ink: #172033;
+      --muted: #657184;
+      --paper: #f7f9fc;
+      --line: #dfe6f0;
+      --alert: #d64545;
+      --green: #26966a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #0d1930; color: var(--ink); font-family: Inter, Segoe UI, Arial, sans-serif; }
+    body { overflow: hidden; }
+    .deck { height: 100vh; position: relative; }
+    .slide {
+      display: none; width: 100vw; height: 100vh; padding: 6.5vh 8vw 7vh;
+      background: var(--paper); position: relative; overflow: hidden;
+    }
+    .slide.active { display: flex; flex-direction: column; }
+    .slide::after {
+      content: ""; position: absolute; right: -12vw; top: -22vh; width: 42vw; height: 42vw;
+      border-radius: 50%; background: rgba(47,111,237,.07); pointer-events: none;
+    }
+    .cover { background: linear-gradient(135deg, #102247 0%, #1d4175 58%, #237e9c 100%); color: white; justify-content: center; }
+    .cover::before { content: "∿"; position: absolute; right: 10vw; bottom: 3vh; font-size: 30vw; line-height: .5; color: rgba(255,255,255,.09); font-weight: 200; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: 13px; font-weight: 700; color: var(--teal); margin-bottom: 18px; }
+    .cover .eyebrow { color: #8ee6e5; }
+    h1 { font-size: clamp(42px, 6vw, 86px); line-height: .98; margin: 0 0 24px; max-width: 850px; letter-spacing: -.04em; }
+    h2 { font-size: clamp(31px, 4vw, 56px); line-height: 1.04; margin: 0 0 28px; color: var(--navy); letter-spacing: -.03em; }
+    h3 { color: var(--navy); margin: 0 0 10px; font-size: 23px; }
+    p, li, td { font-size: clamp(17px, 1.65vw, 25px); line-height: 1.4; }
+    .cover p { color: #dbe8fb; max-width: 760px; font-size: clamp(20px, 2vw, 30px); }
+    .meta { margin-top: 52px; color: #b9cae5; font-size: 18px; }
+    ul, ol { margin: 4px 0 0 24px; padding: 0; }
+    li { margin: 10px 0; }
+    .lead { max-width: 1000px; color: var(--muted); font-size: clamp(20px, 2vw, 30px); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 10px; }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card { background: white; border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: 0 8px 22px rgba(23,43,77,.06); }
+    .card p { margin: 0; color: var(--muted); }
+    .metric { font-size: clamp(34px, 4vw, 60px); color: var(--blue); font-weight: 800; line-height: 1; margin-bottom: 9px; }
+    .flow { display: flex; align-items: stretch; gap: 12px; margin-top: 30px; }
+    .flow .node { flex: 1; background: white; border: 2px solid #cdd8ea; border-radius: 16px; padding: 22px 18px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .flow .node strong { color: var(--navy); font-size: 20px; }
+    .flow .node span { color: var(--muted); margin-top: 9px; font-size: 16px; line-height: 1.3; }
+    .arrow { align-self: center; color: var(--blue); font-size: 32px; font-weight: 800; }
+    .callout { border-left: 6px solid var(--teal); background: #eaf8f8; border-radius: 0 14px 14px 0; padding: 20px 24px; margin-top: 26px; color: var(--navy); }
+    .callout.alert { border-color: var(--alert); background: #fff0f0; }
+    .code { background: #13223d; color: #dce9ff; border-radius: 16px; padding: 24px; font: 16px/1.6 Consolas, monospace; white-space: pre-wrap; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 18px rgba(23,43,77,.05); }
+    th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+    th { color: white; background: var(--navy); font-size: 16px; text-transform: uppercase; letter-spacing: .05em; }
+    td { font-size: 18px; }
+    td:first-child { color: var(--blue); font-weight: 700; width: 30%; }
+    .tag { display: inline-block; border-radius: 999px; padding: 7px 13px; background: #e9f0ff; color: var(--blue); font-size: 15px; font-weight: 700; margin: 4px 4px 0 0; }
+    .footer { position: absolute; bottom: 24px; left: 8vw; right: 8vw; display: flex; justify-content: space-between; color: #8a96a8; font-size: 13px; z-index: 2; }
+    .cover .footer { color: #aac0df; }
+    .controls { position: fixed; right: 24px; bottom: 18px; z-index: 20; display: flex; gap: 8px; }
+    button { border: 0; border-radius: 10px; padding: 9px 13px; background: rgba(255,255,255,.92); color: var(--navy); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+    button:hover { background: white; }
+    @media (max-width: 800px) {
+      .slide { padding: 6vh 7vw 8vh; overflow-y: auto; }
+      .grid, .grid.three, .flow { grid-template-columns: 1fr; display: grid; }
+      .arrow { transform: rotate(90deg); justify-self: center; }
+      p, li, td { font-size: 17px; }
+      h2 { font-size: 34px; }
+    }
+    @media print {
+      body { overflow: visible; background: white; }
+      .slide, .slide.active { display: flex; page-break-after: always; height: 100vh; }
+      .controls { display: none; }
+    }
+  </style>
+</head>
+<body>
+<main class="deck">
+  <section class="slide cover active">
+    <div class="eyebrow">Projeto Integrador · UNIVESP</div>
+    <h1>Monitor de<br>Ruído IoT</h1>
+    <p>Aplicativo Android para transformar dados de sensores em informação clara, contextualizada e acionável.</p>
+    <div class="meta">Equipe: preencher nomes · Banca: preencher data</div>
+    <div class="footer"><span>Monitor de Ruído IoT</span><span>01 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">01 · Contexto</div><h2>O problema</h2>
+    <p class="lead">Dados brutos de sensores não respondem sozinhos à pergunta mais importante: “o que está acontecendo agora e isso exige atenção?”</p>
+    <div class="grid">
+      <div class="card"><h3>Baixa interpretação</h3><p>Leituras técnicas são difíceis de compreender por usuários não especialistas.</p></div>
+      <div class="card"><h3>Falta de contexto</h3><p>O mesmo nível pode ser permitido durante o dia e gerar alerta no horário de silêncio.</p></div>
+      <div class="card"><h3>Rede instável</h3><p>Uma falha temporária não deveria apagar a última informação confiável.</p></div>
+      <div class="card"><h3>Decisão norteadora</h3><p>Como monitorar em quase tempo real sem aumentar a complexidade para o usuário?</p></div>
+    </div><div class="footer"><span>O desafio</span><span>02 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">02 · Objetivo</div><h2>Uma experiência simples para um problema técnico</h2>
+    <p class="lead">Desenvolver um aplicativo Android que converta medições do ambiente em uma visão operacional das casas monitoradas.</p>
+    <div class="grid three">
+      <div class="card"><div class="metric">01</div><p>Consultar a API do servidor local.</p></div>
+      <div class="card"><div class="metric">02</div><p>Interpretar os níveis em linguagem simples.</p></div>
+      <div class="card"><div class="metric">03</div><p>Manter o último estado durante falhas temporárias.</p></div>
+    </div>
+    <div class="callout"><strong>Critério de sucesso:</strong> o usuário identifica rapidamente casas barulhentas, sensores sem sinal e o contexto do horário de silêncio.</div>
+    <div class="footer"><span>Objetivo do produto</span><span>03 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">03 · Arquitetura</div><h2>O caminho do dado</h2>
+    <div class="flow">
+      <div class="node"><strong>ESP32</strong><span>Medição do ambiente</span></div><div class="arrow">→</div>
+      <div class="node"><strong>Docker / FastAPI</strong><span>Processamento, regras e API</span></div><div class="arrow">→</div>
+      <div class="node"><strong>Flutter</strong><span>Interface, interpretação e cache</span></div>
+    </div>
+    <div class="callout"><strong>Separação de responsabilidades:</strong> o servidor concentra a origem dos dados; o aplicativo concentra a experiência de consulta.</div>
+    <div class="footer"><span>Arquitetura geral</span><span>04 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">04 · Funcionamento</div><h2>Do sensor à tela</h2>
+    <ol>
+      <li>O sensor mede o ambiente e envia os dados pela rede.</li>
+      <li>O servidor recebe, processa e disponibiliza respostas JSON.</li>
+      <li>O app consulta o overview a cada 5 segundos.</li>
+      <li>O usuário visualiza estado, alertas e sensores offline.</li>
+      <li>O detalhe da casa consulta o histórico diário.</li>
+      <li>Respostas válidas são salvas localmente para contingência.</li>
+    </ol>
+    <div class="code">GET /api/app/overview
+GET /api/app/houses/{sensor_id}/history</div>
+    <div class="footer"><span>Fluxo operacional</span><span>05 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">05 · Implementação</div><h2>Arquitetura interna do app</h2>
+    <table><thead><tr><th>Componente</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>main.dart</td><td>Inicialização e tela inicial</td></tr>
+      <tr><td>api.dart</td><td>Cliente HTTP, modelos e parsing defensivo</td></tr>
+      <tr><td>settings.dart</td><td>Endereço salvo e cache persistente</td></tr>
+      <tr><td>noise_ui.dart</td><td>Tema, cores e componentes reutilizáveis</td></tr>
+      <tr><td>screens/</td><td>Conexão, overview, detalhe e ajuda</td></tr>
+    </tbody></table>
+    <div class="footer"><span>Organização do código</span><span>06 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">06 · Experiência</div><h2>O usuário não precisa conhecer o protocolo</h2>
+    <div class="grid">
+      <div class="card"><h3>Conectar</h3><p>Informar o IP do computador. A conexão é testada antes de ser salva.</p></div>
+      <div class="card"><h3>Entender</h3><p>O app traduz níveis técnicos para rótulos e exemplos do cotidiano.</p></div>
+      <div class="card"><h3>Agir</h3><p>Alertas destacam ruído alto dentro do horário de silêncio.</p></div>
+      <div class="card"><h3>Investigar</h3><p>O usuário abre uma casa e consulta o histórico visual por hora.</p></div>
+    </div>
+    <div style="margin-top:22px"><span class="tag">Tranquilo</span><span class="tag">Movimento normal</span><span class="tag">Barulhento</span><span class="tag">Muito alto</span><span class="tag">Sem sinal</span></div>
+    <div class="footer"><span>Jornada do usuário</span><span>07 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">07 · Contexto</div><h2>Horário de silêncio e alertas</h2>
+    <p class="lead">O alerta não depende apenas da intensidade: ele depende da intensidade <em>e</em> do momento.</p>
+    <div class="grid three">
+      <div class="card"><div class="metric">A</div><h3>Período ativo</h3><p>O servidor informa se o silêncio está vigente.</p></div>
+      <div class="card"><div class="metric">+</div><h3>Nível alto</h3><p>Ruído alto ou muito alto é identificado.</p></div>
+      <div class="card"><div class="metric">!</div><h3>Alerta</h3><p>A combinação gera destaque visual para o usuário.</p></div>
+    </div>
+    <div class="callout alert"><strong>Decisão de produto:</strong> separar “sensor sem sinal” de “ambiente silencioso” evita uma interpretação incorreta.</div>
+    <div class="footer"><span>Regras de negócio</span><span>08 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">08 · Visualização</div><h2>Histórico que ajuda a explicar o dia</h2>
+    <div class="grid">
+      <div class="card"><div class="metric">24</div><p>intervalos horários exibidos no gráfico.</p></div>
+      <div class="card"><div class="metric">RMS</div><p>média de intensidade usada para dimensionar as barras.</p></div>
+      <div class="card"><div class="metric">∞</div><p>pior nível registrado por horário.</p></div>
+      <div class="card"><div class="metric">3</div><p>resumos: duração, hora mais agitada e medições.</p></div>
+    </div>
+    <div class="callout">As faixas azuladas representam o horário de silêncio e conectam o dado técnico ao contexto do condomínio.</div>
+    <div class="footer"><span>Histórico por casa</span><span>09 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">09 · Confiabilidade</div><h2>Quando a rede falha, a informação permanece útil</h2>
+    <div class="flow">
+      <div class="node"><strong>Resposta válida</strong><span>Dados recebidos da API</span></div><div class="arrow">→</div>
+      <div class="node"><strong>Cache local</strong><span>Overview e histórico persistidos</span></div><div class="arrow">→</div>
+      <div class="node"><strong>Falha temporária</strong><span>Último estado + idade exibidos</span></div>
+    </div>
+    <div class="grid" style="margin-top:24px"><div class="card"><h3>Timeout</h3><p>6 segundos para evitar espera indefinida.</p></div><div class="card"><h3>Transparência</h3><p>A interface informa quando os dados são antigos.</p></div></div>
+    <div class="footer"><span>Resiliência</span><span>10 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">10 · Qualidade</div><h2>Entrega acompanhada de validação</h2>
+    <div class="grid three">
+      <div class="card"><div class="metric">✓</div><h3>Parsing</h3><p>Tratamento defensivo para campos opcionais e tipos inesperados.</p></div>
+      <div class="card"><div class="metric">✓</div><h3>Testes</h3><p>Normalização de URL, parsing e widgets principais.</p></div>
+      <div class="card"><div class="metric">✓</div><h3>CI/CD</h3><p>Analyze, test, build e upload do APK automatizados.</p></div>
+    </div>
+    <div class="callout"><strong>Pipeline:</strong> dependências → análise → testes → build release → artefato.</div>
+    <div class="footer"><span>Qualidade e automação</span><span>11 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">11 · Segurança</div><h2>Escopo claro e evolução responsável</h2>
+    <div class="grid">
+      <div class="card"><h3>O que o app não faz</h3><p>Não grava áudio, não controla sensores e não altera medições.</p></div>
+      <div class="card"><h3>Limitação atual</h3><p>HTTP sem TLS é usado apenas para a rede local confiável.</p></div>
+      <div class="card"><h3>Antes da exposição externa</h3><p>Adicionar HTTPS, autenticação, autorização e revisão de segurança.</p></div>
+      <div class="card"><h3>Precisão</h3><p>Os níveis são classificações operacionais, não medição legal em decibéis.</p></div>
+    </div>
+    <div class="footer"><span>Limitações e segurança</span><span>12 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">12 · Resultado</div><h2>O que foi entregue</h2>
+    <ul>
+      <li>Aplicativo Android organizado em Flutter.</li>
+      <li>Integração definida com a API do servidor.</li>
+      <li>Visão geral, alertas, sensores offline e histórico.</li>
+      <li>Cache persistente para falhas temporárias de rede.</li>
+      <li>Testes, análise estática e build automatizado.</li>
+      <li>Documentação operacional para execução e manutenção.</li>
+    </ul>
+    <div class="callout"><strong>Valor entregue:</strong> reduzir a distância entre a medição técnica e a decisão do usuário.</div>
+    <div class="footer"><span>Resultados</span><span>13 / 15</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">13 · Evolução</div><h2>Próximos passos</h2>
+    <div class="grid">
+      <div class="card"><h3>Integração</h3><p>Versionar formalmente o contrato da API e testar com servidor simulado.</p></div>
+      <div class="card"><h3>Validação</h3><p>Executar testes em dispositivo real com quatro sensores.</p></div>
+      <div class="card"><h3>Produto</h3><p>Melhorar acessibilidade, internacionalização e observabilidade.</p></div>
+      <div class="card"><h3>Segurança</h3><p>Adotar HTTPS e autenticação para uso fora da rede local.</p></div>
+    </div>
+    <div class="footer"><span>Roadmap</span><span>14 / 15</span></div>
+  </section>
+  <section class="slide cover">
+    <div class="eyebrow">Conclusão</div><h1>Dados claros.<br>Decisões melhores.</h1>
+    <p>O Monitor de Ruído IoT transforma medições do ambiente em uma experiência visual, contextualizada e resiliente.</p>
+    <div class="meta">Obrigado · Perguntas?</div>
+    <div class="footer"><span>Monitor de Ruído IoT</span><span>15 / 15</span></div>
+  </section>
+</main>
+<div class="controls"><button id="prev" aria-label="Slide anterior">←</button><button id="next" aria-label="Próximo slide">→</button><button id="print" aria-label="Imprimir ou salvar PDF">PDF</button></div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let index = 0;
+  function show(next) {
+    index = (next + slides.length) % slides.length;
+    slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+  }
+  document.getElementById('prev').onclick = () => show(index - 1);
+  document.getElementById('next').onclick = () => show(index + 1);
+  document.getElementById('print').onclick = () => window.print();
+  document.addEventListener('keydown', event => {
+    if (['ArrowRight', 'PageDown', ' '].includes(event.key)) show(index + 1);
+    if (['ArrowLeft', 'PageUp'].includes(event.key)) show(index - 1);
+    if (event.key === 'Home') show(0);
+    if (event.key === 'End') show(slides.length - 1);
+  });
+</script>
+</body>
+</html>

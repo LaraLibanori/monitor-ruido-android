@@ -81,8 +81,23 @@ GET /api/app/houses/{sensor_id}/history
 │   └── test/
 └── .github/
     └── workflows/
-        └── android.yml
+        ├── android.yml
+        └── ios.yml
 ```
+
+## Apresentação do projeto
+
+O material profissional para apresentação à banca está em:
+
+```text
+docs/apresentacao-banca.html
+docs/apresentacao-banca.md
+```
+
+Abra o arquivo HTML no Chrome ou Edge para apresentar em tela cheia. As setas
+do teclado navegam entre os slides; o botão **PDF** abre a impressão do
+navegador para salvar uma versão em PDF. Antes da banca, substitua os campos
+de equipe e data na capa.
 
 ### Responsabilidade dos principais arquivos
 
@@ -175,6 +190,14 @@ Para executar manualmente:
 3. clique em **Run workflow**;
 4. aguarde a conclusão;
 5. baixe o artefato `monitor-ruido-apk`.
+
+O workflow `.github/workflows/ios.yml` executa em macOS, prepara as plataformas
+Android/iOS, analisa o projeto, executa os testes e gera um build iOS sem
+assinatura. Esse artefato valida a compilação, mas não substitui a assinatura
+Apple nem o envio ao TestFlight.
+
+O checklist completo de homologação, assinatura e publicação está em
+`docs/RELEASE-CHECKLIST.md`.
 
 ## Configuração da conexão
 
