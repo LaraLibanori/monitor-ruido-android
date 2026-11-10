@@ -13,6 +13,7 @@ import '../settings.dart';
 import 'connect_screen.dart';
 import 'help_screen.dart';
 import 'house_screen.dart';
+import 'admin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.api});
@@ -115,6 +116,13 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Trocar servidor',
             icon: const Icon(Icons.settings_outlined),
             onPressed: _openSettings,
+          ),
+          IconButton(
+            tooltip: 'Administração',
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const AdminScreen()),
+            ),
           ),
         ],
       ),

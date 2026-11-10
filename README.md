@@ -29,6 +29,8 @@ sensores e não altera as medições armazenadas no servidor.
 - gráfico de intensidade por hora;
 - atualização automática e atualização manual por gesto;
 - cache persistente do overview e do histórico;
+- protótipo local de administração para cadastrar moradores e canal preferido
+  de alerta;
 - tela de ajuda com explicação dos níveis e das limitações da medição.
 
 ## Requisitos
@@ -81,8 +83,23 @@ GET /api/app/houses/{sensor_id}/history
 │   └── test/
 └── .github/
     └── workflows/
-        └── android.yml
+        ├── android.yml
+        └── ios.yml
 ```
+
+## Apresentação do projeto
+
+O material profissional para apresentação à banca está em:
+
+```text
+docs/apresentacao-banca.html
+docs/apresentacao-banca.md
+```
+
+Abra o arquivo HTML no Chrome ou Edge para apresentar em tela cheia. As setas
+do teclado navegam entre os slides; o botão **PDF** abre a impressão do
+navegador para salvar uma versão em PDF. Antes da banca, substitua os campos
+de equipe e data na capa.
 
 ### Responsabilidade dos principais arquivos
 
@@ -176,6 +193,14 @@ Para executar manualmente:
 4. aguarde a conclusão;
 5. baixe o artefato `monitor-ruido-apk`.
 
+O workflow `.github/workflows/ios.yml` executa em macOS, prepara as plataformas
+Android/iOS, analisa o projeto, executa os testes e gera um build iOS sem
+assinatura. Esse artefato valida a compilação, mas não substitui a assinatura
+Apple nem o envio ao TestFlight.
+
+O checklist completo de homologação, assinatura e publicação está em
+`docs/RELEASE-CHECKLIST.md`.
+
 ## Configuração da conexão
 
 1. Inicie o servidor local.
@@ -218,6 +243,8 @@ bidirecional e não substitui a fonte oficial.
 - O manifesto permite HTTP sem TLS para viabilizar o uso local; para exposição
   externa, é necessário adotar HTTPS, autenticação e revisão de segurança.
 - O backend e o contrato completo da API não são mantidos neste repositório.
+- o cadastro de moradores é local e demonstrativo; autenticação, convites,
+  Firebase/e-mail e permissões reais dependem do backend.
 
 ## Critérios de aceite
 

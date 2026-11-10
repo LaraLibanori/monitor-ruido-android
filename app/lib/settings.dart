@@ -2,6 +2,8 @@
 // settings.dart - Guarda o endereço do servidor no celular
 // =============================================
 
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Settings {
@@ -10,6 +12,7 @@ class Settings {
   static const _overviewAtKey = 'cached_overview_at';
   static const _historyPrefix = 'cached_history_';
   static const _historyAtPrefix = 'cached_history_at_';
+  static const _residentsKey = 'admin_residents';
 
   static Future<String?> loadServer() async {
     final prefs = await SharedPreferences.getInstance();
@@ -59,6 +62,30 @@ class Settings {
     if (savedAt == null) return null;
     return CachedPayload(json: payload, savedAt: savedAt);
   }
+
+  static Future<List<Resident>> loadResidents() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_residentsKey);
+    if (raw == null) return <Resident>[];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <Resident>[];
+      return decoded
+          .whereType<Map>()
+          .map((item) => Resident.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    } on FormatException {
+      return <Resident>[];
+    }
+  }
+
+  static Future<void> saveResidents(List<Resident> residents) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _residentsKey,
+      jsonEncode(residents.map((resident) => resident.toJson()).toList()),
+    );
+  }
 }
 
 class CachedPayload {
@@ -66,4 +93,40 @@ class CachedPayload {
 
   final String json;
   final DateTime savedAt;
+}
+
+class Resident {
+  const Resident({
+    required this.id,
+    required this.name,
+    required this.contact,
+    required this.channel,
+    required this.house,
+    required this.enabled,
+  });
+
+  final String id;
+  final String name;
+  final String contact;
+  final String channel;
+  final String house;
+  final bool enabled;
+
+  factory Resident.fromJson(Map<String, dynamic> json) => Resident(
+        id: json['id'] is String ? json['id'] as String : '',
+        name: json['name'] is String ? json['name'] as String : '',
+        contact: json['contact'] is String ? json['contact'] as String : '',
+        channel: json['channel'] is String ? json['channel'] as String : 'email',
+        house: json['house'] is String ? json['house'] as String : '',
+        enabled: json['enabled'] == true,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'contact': contact,
+        'channel': channel,
+        'house': house,
+        'enabled': enabled,
+      };
 }

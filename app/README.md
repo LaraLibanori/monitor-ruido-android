@@ -61,6 +61,10 @@ build\app\outputs\flutter-apk\app-release.apk
 O workflow raiz `.github/workflows/android.yml` executa análise, testes e build
 do APK. O artefato gerado chama-se `monitor-ruido-apk`.
 
+O workflow `.github/workflows/ios.yml` executa em macOS e valida a compilação
+iOS sem assinatura. A publicação em TestFlight ainda exige uma conta Apple
+Developer, Bundle ID e certificados configurados no Xcode.
+
 ## Uso do aplicativo
 
 1. Inicie o servidor local.
@@ -160,6 +164,24 @@ Isso indica que a última atualização falhou, mas o cache local está disponí
 Verifique a rede e atualize a tela. Os dados exibidos permanecem somente para
 consulta até que uma nova resposta seja recebida.
 
+## Android e iOS
+
+O código Dart é compartilhado entre as duas plataformas. Android pode ser
+compilado localmente em Windows, macOS ou Linux com o SDK configurado. iOS
+precisa de macOS e Xcode:
+
+```bash
+flutter create --platforms=android,ios --org br.univesp --project-name monitor_ruido .
+flutter pub get
+flutter analyze
+flutter test
+flutter build ios --release --no-codesign
+```
+
+O comando `--no-codesign` serve para validar a compilação. Para instalar em
+iPhone real ou publicar no TestFlight, é obrigatório configurar assinatura,
+provisionamento e equipe Apple no Xcode. Consulte `docs/RELEASE-CHECKLIST.md`.
+
 ## Limitações
 
 - o aplicativo depende do contrato fornecido pelo backend;
@@ -167,3 +189,5 @@ consulta até que uma nova resposta seja recebida.
 - HTTP sem TLS é permitido apenas para o cenário de rede local;
 - autenticação, HTTPS e endurecimento do servidor são necessários para uso
   fora da rede confiável.
+- a tela de administração é um protótipo local; o backend deve controlar
+  usuários, permissões, convites e envio de notificações.
