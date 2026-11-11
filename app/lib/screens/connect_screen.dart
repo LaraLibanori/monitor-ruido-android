@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../noise_ui.dart';
+import '../session.dart';
 import '../settings.dart';
 import 'home_screen.dart';
+import 'login_screen.dart';
 
 class ConnectScreen extends StatefulWidget {
   const ConnectScreen({super.key, this.initialUrl});
@@ -55,12 +57,28 @@ class _ConnectScreenState extends State<ConnectScreen> {
     });
 
     try {
-      final api = ApiClient(url);
-      await api.overview(); // testa de verdade antes de salvar
+      // Outro servidor = outra conta: a sessão anterior só vale no mesmo endereço.
+      final sameServer = url == widget.initialUrl;
+      final savedToken = sameServer ? await SessionStore.loadToken() : null;
+      final api = ApiClient(url, token: savedToken);
+      var needsLogin = false;
+      try {
+        await api.overview(); // testa de verdade antes de salvar
+      } on UnauthorizedException {
+        needsLogin = true; // servidor respondeu, mas pede login
+      }
       await Settings.saveServer(url);
+      if (!sameServer || needsLogin) {
+        await SessionStore.clear();
+        await Settings.clearCache();
+      }
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => HomeScreen(api: api)),
+        MaterialPageRoute<void>(
+          builder: (_) => needsLogin
+              ? LoginScreen(api: api.withToken(null), mandatory: true)
+              : HomeScreen(api: sameServer ? api : api.withToken(null)),
+        ),
         (route) => false,
       );
     } on ApiException catch (e) {
