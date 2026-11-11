@@ -189,3 +189,5 @@ provisionamento e equipe Apple no Xcode. Consulte `docs/RELEASE-CHECKLIST.md`.
 - HTTP sem TLS é permitido apenas para o cenário de rede local;
 - autenticação, HTTPS e endurecimento do servidor são necessários para uso
   fora da rede confiável.
+- a tela de administração é um protótipo local; o backend deve controlar
+  usuários, permissões, convites e envio de notificações.

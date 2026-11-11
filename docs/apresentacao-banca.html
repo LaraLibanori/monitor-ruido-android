@@ -206,7 +206,7 @@ GET /api/app/houses/{sensor_id}/history</div>
       <div class="card"><h3>Antes da exposição externa</h3><p>Adicionar HTTPS, autenticação, autorização e revisão de segurança.</p></div>
       <div class="card"><h3>Precisão</h3><p>Os níveis são classificações operacionais, não medição legal em decibéis.</p></div>
     </div>
-    <div class="footer"><span>Limitações e segurança</span><span>12 / 15</span></div>
+    <div class="footer"><span>Limitações e segurança</span><span>12 / 16</span></div>
   </section>
   <section class="slide">
     <div class="eyebrow">12 · Resultado</div><h2>O que foi entregue</h2>
@@ -219,23 +219,34 @@ GET /api/app/houses/{sensor_id}/history</div>
       <li>Documentação operacional para execução e manutenção.</li>
     </ul>
     <div class="callout"><strong>Valor entregue:</strong> reduzir a distância entre a medição técnica e a decisão do usuário.</div>
-    <div class="footer"><span>Resultados</span><span>13 / 15</span></div>
+    <div class="footer"><span>Resultados</span><span>13 / 16</span></div>
   </section>
   <section class="slide">
-    <div class="eyebrow">13 · Evolução</div><h2>Próximos passos</h2>
+    <div class="eyebrow">13 · Administração</div><h2>Moradores e notificações</h2>
+    <div class="grid">
+      <div class="card"><h3>Configuração local</h3><p>O protótipo permite cadastrar nome, contato, casa/sensor e canal preferido.</p></div>
+      <div class="card"><h3>Produção</h3><p>O administrador deverá usar login, papéis, convites e endpoints protegidos no backend.</p></div>
+      <div class="card"><h3>Push</h3><p>O backend registra dispositivos e usa Firebase Cloud Messaging para alertas com o app fechado.</p></div>
+      <div class="card"><h3>E-mail</h3><p>O e-mail funciona como canal complementar; credenciais ficam somente no servidor.</p></div>
+    </div>
+    <div class="callout alert"><strong>Ponto pendente:</strong> o backend FastAPI/Docker e as credenciais de produção não fazem parte deste repositório.</div>
+    <div class="footer"><span>Administração e alertas</span><span>14 / 16</span></div>
+  </section>
+  <section class="slide">
+    <div class="eyebrow">14 · Evolução</div><h2>Próximos passos</h2>
     <div class="grid">
       <div class="card"><h3>Integração</h3><p>Versionar formalmente o contrato da API e testar com servidor simulado.</p></div>
       <div class="card"><h3>Validação</h3><p>Executar testes em dispositivo real com quatro sensores.</p></div>
       <div class="card"><h3>Produto</h3><p>Melhorar acessibilidade, internacionalização e observabilidade.</p></div>
       <div class="card"><h3>Segurança</h3><p>Adotar HTTPS e autenticação para uso fora da rede local.</p></div>
     </div>
-    <div class="footer"><span>Roadmap</span><span>14 / 15</span></div>
+    <div class="footer"><span>Roadmap</span><span>15 / 16</span></div>
   </section>
   <section class="slide cover">
     <div class="eyebrow">Conclusão</div><h1>Dados claros.<br>Decisões melhores.</h1>
     <p>O Monitor de Ruído IoT transforma medições do ambiente em uma experiência visual, contextualizada e resiliente.</p>
     <div class="meta">Obrigado · Perguntas?</div>
-    <div class="footer"><span>Monitor de Ruído IoT</span><span>15 / 15</span></div>
+    <div class="footer"><span>Monitor de Ruído IoT</span><span>16 / 16</span></div>
   </section>
 </main>
 <div class="controls"><button id="prev" aria-label="Slide anterior">←</button><button id="next" aria-label="Próximo slide">→</button><button id="print" aria-label="Imprimir ou salvar PDF">PDF</button></div>

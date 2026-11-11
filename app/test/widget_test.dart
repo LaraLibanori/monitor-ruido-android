@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:monitor_ruido/api.dart';
 import 'package:monitor_ruido/main.dart';
+import 'package:monitor_ruido/settings.dart';
 
 void main() {
   testWidgets('primeira abertura mostra a tela de conexão', (tester) async {
@@ -59,5 +60,22 @@ void main() {
     expect(overview.houses.single.sensorId, '');
     expect(overview.houses.single.rms, 12.5);
     expect(overview.houses.single.todayReadings, 4);
+  });
+
+  test('preserva a configuração de um morador', () {
+    const resident = Resident(
+      id: '1',
+      name: 'Ana',
+      contact: 'ana@example.com',
+      channel: 'email',
+      house: 'Casa 1',
+      enabled: true,
+    );
+
+    final restored = Resident.fromJson(resident.toJson());
+    expect(restored.name, 'Ana');
+    expect(restored.contact, 'ana@example.com');
+    expect(restored.house, 'Casa 1');
+    expect(restored.enabled, isTrue);
   });
 }

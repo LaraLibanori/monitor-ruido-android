@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../noise_ui.dart';
 import '../settings.dart';
+import 'admin_screen.dart';
 import 'connect_screen.dart';
 import 'help_screen.dart';
 import 'house_screen.dart';
@@ -115,6 +116,13 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Trocar servidor',
             icon: const Icon(Icons.settings_outlined),
             onPressed: _openSettings,
+          ),
+          IconButton(
+            tooltip: 'Administração',
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const AdminScreen()),
+            ),
           ),
         ],
       ),

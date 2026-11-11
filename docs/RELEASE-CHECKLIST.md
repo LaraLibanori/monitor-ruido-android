@@ -17,6 +17,9 @@ contas, certificados ou dispositivos físicos.
 - [ ] Configurar assinatura Apple e provisioning profile.
 - [ ] Publicar no Google Play Internal Testing.
 - [ ] Publicar no TestFlight.
+- [x] Protótipo local de administração para cadastrar moradores e canal de alerta.
+- [ ] Backend autenticado para administrador, moradores, sensores e permissões.
+- [ ] Integração real de push (FCM) e e-mail com credenciais de produção.
 
 ## Android
 
@@ -87,6 +90,9 @@ flutter build ios --release --no-codesign
 ## Segurança antes de distribuição externa
 
 - [ ] API protegida por autenticação.
+- [ ] Tela de administração substituída por endpoints protegidos e controle de papéis.
+- [ ] Convites de moradores com expiração e confirmação de e-mail/telefone.
+- [ ] Tokens de push armazenados no backend, nunca em texto de apresentação ou código.
 - [ ] HTTPS configurado.
 - [ ] Não permitir acesso aberto à porta do servidor.
 - [ ] Política de privacidade publicada.

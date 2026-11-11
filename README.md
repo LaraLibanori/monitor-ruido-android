@@ -29,6 +29,8 @@ sensores e não altera as medições armazenadas no servidor.
 - gráfico de intensidade por hora;
 - atualização automática e atualização manual por gesto;
 - cache persistente do overview e do histórico;
+- protótipo local de administração para cadastrar moradores e canal preferido
+  de alerta;
 - tela de ajuda com explicação dos níveis e das limitações da medição.
 
 ## Requisitos
@@ -241,6 +243,8 @@ bidirecional e não substitui a fonte oficial.
 - O manifesto permite HTTP sem TLS para viabilizar o uso local; para exposição
   externa, é necessário adotar HTTPS, autenticação e revisão de segurança.
 - O backend e o contrato completo da API não são mantidos neste repositório.
+- o cadastro de moradores é local e demonstrativo; autenticação, convites,
+  Firebase/e-mail e permissões reais dependem do backend.
 
 ## Critérios de aceite
 

@@ -4,11 +4,11 @@
 
 ### Slide 1 — Capa
 
-**Monitor de Ruído IoT**  
+**Monitor de Ruído IoT**
 Aplicativo Android para acompanhamento inteligente de ambientes monitorados
 
-Projeto Integrador — UNIVESP  
-Equipe: _preencher nomes_  
+Projeto Integrador — UNIVESP
+Equipe: _preencher nomes_
 Data: _preencher data_
 
 **Mensagem-chave:** transformar dados técnicos de sensores em informação clara
@@ -173,7 +173,15 @@ autenticação, controle de acesso, validação do servidor e revisão de segura
 - Funcionamento tolerante a falhas temporárias.
 - Processo documentado de análise, testes e geração do APK.
 
-### Slide 14 — Próximos passos
+### Slide 14 — Administração e notificações
+
+- A tela de Administração permite cadastrar moradores, contato, casa/sensor e canal preferido como protótipo local.
+- Em produção, o administrador deve usar login, permissões e convite por e-mail ou telefone no backend.
+- O backend deve registrar dispositivos e enviar push pelo Firebase Cloud Messaging quando o ruído violar o horário de silêncio.
+- E-mail é canal complementar; tokens, senhas e credenciais nunca devem ser armazenados no aplicativo.
+- A implementação real depende da API FastAPI/Docker e das credenciais do provedor, que não estão neste repositório.
+
+### Slide 15 — Próximos passos
 
 1. Integrar e versionar formalmente o contrato da API.
 2. Executar testes em dispositivo Android real com quatro sensores.
@@ -182,7 +190,7 @@ autenticação, controle de acesso, validação do servidor e revisão de segura
 5. Adotar HTTPS e autenticação para ambientes externos.
 6. Publicar versões assinadas e estabelecer monitoramento operacional.
 
-### Slide 15 — Encerramento
+### Slide 16 — Encerramento
 
 **Conclusão**
 
@@ -193,4 +201,3 @@ instabilidade.
 **Obrigado.**
 
 Perguntas?
-
