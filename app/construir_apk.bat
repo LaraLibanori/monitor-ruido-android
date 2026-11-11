@@ -55,7 +55,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call flutter analyze
+call flutter analyze --no-fatal-infos
 if errorlevel 1 (
     echo  [ERRO] A analise estatica encontrou problemas.
     popd

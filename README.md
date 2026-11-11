@@ -29,8 +29,10 @@ sensores e não altera as medições armazenadas no servidor.
 - gráfico de intensidade por hora;
 - atualização automática e atualização manual por gesto;
 - cache persistente do overview e do histórico;
-- protótipo local de administração para cadastrar moradores e canal preferido
-  de alerta;
+- login opcional: o morador vê somente as casas vinculadas à conta dele;
+- ativação de convite e criação de senha pelo próprio aplicativo;
+- preferências de alerta (push e e-mail), alerta de teste e alertas recentes;
+- administração de moradores, casas e convites gravada no servidor;
 - tela de ajuda com explicação dos níveis e das limitações da medição.
 
 ## Requisitos
@@ -108,8 +110,9 @@ de equipe e data na capa.
 | `app/lib/main.dart` | Inicialização do aplicativo e roteamento inicial |
 | `app/lib/api.dart` | Cliente HTTP, modelos e parsing das respostas |
 | `app/lib/noise_ui.dart` | Tema, cores, textos e componentes visuais reutilizáveis |
-| `app/lib/settings.dart` | Preferências e cache local com `SharedPreferences` |
-| `app/lib/screens/` | Telas de conexão, overview, detalhe e ajuda |
+| `app/lib/settings.dart` | Endereço do servidor e cache local com `SharedPreferences` |
+| `app/lib/session.dart` | Token de login no armazenamento seguro do aparelho |
+| `app/lib/screens/` | Conexão, login/convite, overview, detalhe, conta, administração e ajuda |
 | `app/test/` | Testes unitários e de widgets |
 | `app/construir_apk.bat` | Preparação, validação e geração do APK no Windows |
 | `.github/workflows/android.yml` | Análise, testes, build e publicação do artefato |
@@ -222,6 +225,26 @@ Redes de convidados podem impedir a comunicação entre dispositivos. Firewall
 do Windows, Docker parado, porta incorreta ou servidor não iniciado também
 podem impedir a conexão.
 
+## Conta, moradores e alertas
+
+O login é feito no ícone de conta, no canto superior direito.
+
+| Quem | O que faz no app |
+|---|---|
+| Sem login | Vê as casas como antes (se o servidor permitir acesso aberto) |
+| Morador | Vê só as próprias casas, liga/desliga alertas, envia alerta de teste |
+| Administrador | Tudo do morador, mais cadastrar moradores, vincular casas e gerar convites |
+
+Primeiro acesso do morador: **Entrar → Recebi um convite**, colar o link
+enviado pelo administrador e criar a senha. O administrador é criado no
+servidor (`docker compose exec app python manage.py create-admin`).
+
+Sensores, horário de silêncio, histórico de envios e auditoria ficam no painel
+web do servidor, em `http://SEU-IP:5000/admin`.
+
+O token de login fica no armazenamento seguro do aparelho (Keystore/Keychain)
+e é apagado ao sair, ao trocar de servidor ou quando a sessão expira.
+
 ## Cache e comportamento offline
 
 Após uma resposta válida, o aplicativo armazena localmente:
@@ -243,8 +266,17 @@ bidirecional e não substitui a fonte oficial.
 - O manifesto permite HTTP sem TLS para viabilizar o uso local; para exposição
   externa, é necessário adotar HTTPS, autenticação e revisão de segurança.
 - O backend e o contrato completo da API não são mantidos neste repositório.
-- o cadastro de moradores é local e demonstrativo; autenticação, convites,
-  Firebase/e-mail e permissões reais dependem do backend.
+- O Flutter estável mais recente marca `package:flutter/material.dart` como
+  obsoleto (migração para `material_ui`). O CI usa `flutter analyze
+  --no-fatal-infos`: erros e avisos continuam reprovando; esse aviso informativo
+  não. A migração fica como tarefa futura.
+- Login, moradores, convites e alertas são do backend
+  (`monitor-ruido-dashboard`, versão 6 ou superior). Com servidor antigo o app
+  continua mostrando as casas, sem as funções de conta.
+- O app ainda **não recebe push**: falta adicionar o Firebase ao aplicativo
+  (arquivos do projeto Firebase e `firebase_messaging`). O servidor já aceita o
+  registro do aparelho em `POST /api/me/devices`. Alertas por e-mail não
+  dependem do app.
 
 ## Critérios de aceite
 

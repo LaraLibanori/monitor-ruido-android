@@ -73,9 +73,10 @@
       p, li, td { font-size: 17px; }
       h2 { font-size: 34px; }
     }
+    @page { size: 1280px 720px; margin: 0; }
     @media print {
       body { overflow: visible; background: white; }
-      .slide, .slide.active { display: flex; page-break-after: always; height: 100vh; }
+      .slide, .slide.active { display: flex; flex-direction: column; page-break-after: always; break-inside: avoid; height: 100vh; overflow: hidden; }
       .controls { display: none; }
     }
   </style>
@@ -224,12 +225,12 @@ GET /api/app/houses/{sensor_id}/history</div>
   <section class="slide">
     <div class="eyebrow">13 · Administração</div><h2>Moradores e notificações</h2>
     <div class="grid">
-      <div class="card"><h3>Configuração local</h3><p>O protótipo permite cadastrar nome, contato, casa/sensor e canal preferido.</p></div>
-      <div class="card"><h3>Produção</h3><p>O administrador deverá usar login, papéis, convites e endpoints protegidos no backend.</p></div>
-      <div class="card"><h3>Push</h3><p>O backend registra dispositivos e usa Firebase Cloud Messaging para alertas com o app fechado.</p></div>
-      <div class="card"><h3>E-mail</h3><p>O e-mail funciona como canal complementar; credenciais ficam somente no servidor.</p></div>
+      <div class="card"><h3>Login e papéis</h3><p>Administrador gerencia tudo; morador vê somente as casas vinculadas à conta dele.</p></div>
+      <div class="card"><h3>Convites</h3><p>O administrador cadastra o morador e o sistema gera um link com validade para criar a senha.</p></div>
+      <div class="card"><h3>Alertas</h3><p>Barulho alto no horário de silêncio gera um alerta por sensor, sem repetir a cada leitura.</p></div>
+      <div class="card"><h3>Push e e-mail</h3><p>O servidor envia conforme a preferência de cada morador e registra o resultado de cada envio.</p></div>
     </div>
-    <div class="callout alert"><strong>Ponto pendente:</strong> o backend FastAPI/Docker e as credenciais de produção não fazem parte deste repositório.</div>
+    <div class="callout alert"><strong>Ponto pendente:</strong> envio real exige credenciais de e-mail e projeto Firebase; sem elas, os envios ficam marcados como simulados.</div>
     <div class="footer"><span>Administração e alertas</span><span>14 / 16</span></div>
   </section>
   <section class="slide">

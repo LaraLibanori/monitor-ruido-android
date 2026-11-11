@@ -175,11 +175,11 @@ autenticação, controle de acesso, validação do servidor e revisão de segura
 
 ### Slide 14 — Administração e notificações
 
-- A tela de Administração permite cadastrar moradores, contato, casa/sensor e canal preferido como protótipo local.
-- Em produção, o administrador deve usar login, permissões e convite por e-mail ou telefone no backend.
-- O backend deve registrar dispositivos e enviar push pelo Firebase Cloud Messaging quando o ruído violar o horário de silêncio.
-- E-mail é canal complementar; tokens, senhas e credenciais nunca devem ser armazenados no aplicativo.
-- A implementação real depende da API FastAPI/Docker e das credenciais do provedor, que não estão neste repositório.
+- O administrador entra com login, cadastra moradores, vincula cada um às suas casas e gera convites com validade.
+- O morador aceita o convite, cria a senha e passa a ver somente as casas autorizadas.
+- Barulho alto no horário de silêncio gera um alerta por sensor, sem repetir a cada leitura.
+- O servidor envia por push (Firebase Cloud Messaging) e e-mail (SMTP), conforme a preferência de cada morador, e registra cada envio.
+- Sem credenciais de e-mail/push os envios ficam marcados como simulados; o recebimento de push no celular ainda depende do projeto Firebase.
 
 ### Slide 15 — Próximos passos
 
