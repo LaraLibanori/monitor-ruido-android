@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:monitor_ruido/api.dart';
 import 'package:monitor_ruido/main.dart';
+import 'package:monitor_ruido/settings.dart';
 
 void main() {
   testWidgets('primeira abertura mostra a tela de conexão', (tester) async {

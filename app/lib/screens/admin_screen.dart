@@ -191,7 +191,7 @@ class _ResidentDialogState extends State<_ResidentDialog> {
             ),
             TextField(controller: _house, decoration: const InputDecoration(labelText: 'Casa/sensor')),
             DropdownButtonFormField<String>(
-              value: _channel,
+              initialValue: _channel,
               decoration: const InputDecoration(labelText: 'Canal preferido'),
               items: const [
                 DropdownMenuItem(value: 'email', child: Text('E-mail')),

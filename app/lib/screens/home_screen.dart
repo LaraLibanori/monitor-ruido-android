@@ -10,10 +10,10 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../noise_ui.dart';
 import '../settings.dart';
+import 'admin_screen.dart';
 import 'connect_screen.dart';
 import 'help_screen.dart';
 import 'house_screen.dart';
-import 'admin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.api});
