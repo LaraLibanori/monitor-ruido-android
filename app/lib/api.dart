@@ -1,9 +1,13 @@
 // =============================================
 // api.dart - Conversa com o servidor (FastAPI no Docker)
 // =============================================
-// O app só LÊ dados. Rotas usadas:
+// Leitura das casas:
 //   GET /api/app/overview
 //   GET /api/app/houses/{sensor_id}/history
+// Conta (token Bearer devolvido no login):
+//   /api/auth/*  login, logout, convite
+//   /api/me/*    preferências, aparelho, alertas
+//   /api/admin/* moradores e casas (só administrador)
 // =============================================
 
 import 'dart:async';
@@ -18,6 +22,11 @@ class ApiException implements Exception {
 
   @override
   String toString() => message;
+}
+
+/// O servidor recusou o token (sessão expirada) ou exige login.
+class UnauthorizedException extends ApiException {
+  UnauthorizedException([super.message = 'Sua sessão expirou. Entre novamente.']);
 }
 
 int _toInt(dynamic value) => value is num ? value.toInt() : int.tryParse('$value') ?? 0;
@@ -203,16 +212,177 @@ class History {
 }
 
 // ---------------------------------------------
+// Conta, moradores e alertas
+// ---------------------------------------------
+
+class AppUser {
+  AppUser({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.role,
+    required this.active,
+    required this.status,
+    required this.sensorIds,
+    required this.emailEnabled,
+    required this.pushEnabled,
+    required this.devices,
+  });
+
+  final int id;
+  final String name;
+  final String email;
+  final String? phone;
+  final String role; // admin | morador
+  final bool active;
+  final String status; // ativo | convite_pendente | inativo
+  final List<String> sensorIds;
+  final bool emailEnabled;
+  final bool pushEnabled;
+  final int devices;
+
+  bool get isAdmin => role == 'admin';
+
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    final notifications = _map(json['notifications']);
+    return AppUser(
+      id: _toInt(json['id']),
+      name: _toString(json['name']) ?? '',
+      email: _toString(json['email']) ?? '',
+      phone: _toString(json['phone']),
+      role: _toString(json['role']) ?? 'morador',
+      active: json['active'] == true,
+      status: _toString(json['status']) ?? '',
+      sensorIds: _list(json['sensor_ids']).whereType<String>().toList(),
+      emailEnabled: notifications['email'] == true,
+      pushEnabled: notifications['push'] == true,
+      devices: _toInt(json['devices']),
+    );
+  }
+}
+
+class Session {
+  Session({required this.token, required this.user});
+
+  final String token;
+  final AppUser user;
+
+  factory Session.fromJson(Map<String, dynamic> json) => Session(
+        token: _toString(json['token']) ?? '',
+        user: AppUser.fromJson(_map(json['user'])),
+      );
+}
+
+class InviteResult {
+  InviteResult({required this.url, required this.channel, required this.status, required this.detail});
+
+  final String url;
+  final String channel; // email | phone
+  final String status; // sent | simulated | failed | skipped
+  final String detail;
+
+  /// true somente quando o servidor realmente enviou o convite.
+  bool get delivered => status == 'sent';
+
+  factory InviteResult.fromJson(Map<String, dynamic> json) {
+    final delivery = _map(json['delivery']);
+    return InviteResult(
+      url: _toString(json['invite_url']) ?? '',
+      channel: _toString(delivery['channel']) ?? 'email',
+      status: _toString(delivery['status']) ?? '',
+      detail: _toString(delivery['detail']) ?? '',
+    );
+  }
+}
+
+class SensorInfo {
+  SensorInfo({required this.sensorId, required this.label, required this.active});
+
+  final String sensorId;
+  final String label;
+  final bool active;
+
+  factory SensorInfo.fromJson(Map<String, dynamic> json) {
+    final id = _toString(json['sensor_id']) ?? '';
+    final display = _toString(json['display_name']);
+    final location = _toString(json['location']);
+    return SensorInfo(
+      sensorId: id,
+      label: (display != null && display.isNotEmpty)
+          ? display
+          : (location != null && location.isNotEmpty ? location : id),
+      active: json['active'] == true,
+    );
+  }
+}
+
+class DeliveryInfo {
+  DeliveryInfo({required this.channel, required this.status, required this.detail});
+
+  final String channel;
+  final String status;
+  final String detail;
+
+  factory DeliveryInfo.fromJson(Map<String, dynamic> json) => DeliveryInfo(
+        channel: _toString(json['channel']) ?? '',
+        status: _toString(json['status']) ?? '',
+        detail: _toString(json['detail']) ?? '',
+      );
+}
+
+class AlertEvent {
+  AlertEvent({
+    required this.houseName,
+    required this.level,
+    required this.createdAt,
+    required this.deliveries,
+  });
+
+  final String houseName;
+  final String level;
+  final DateTime? createdAt;
+  final List<DeliveryInfo> deliveries;
+
+  factory AlertEvent.fromJson(Map<String, dynamic> json) => AlertEvent(
+        houseName: _toString(json['house_name']) ?? (_toString(json['sensor_id']) ?? ''),
+        level: _toString(json['noise_level']) ?? '',
+        createdAt: DateTime.tryParse(_toString(json['created_at']) ?? '')?.toLocal(),
+        deliveries: _list(json['deliveries'])
+            .whereType<Map>()
+            .map((item) => DeliveryInfo.fromJson(_map(item)))
+            .toList(),
+      );
+}
+
+/// Extrai o token de um link de convite ("...convite?token=ABC") ou devolve o
+/// próprio texto quando a pessoa colou só o código.
+String inviteTokenFrom(String input) {
+  final text = input.trim();
+  final uri = Uri.tryParse(text);
+  final fromQuery = uri?.queryParameters['token'];
+  if (fromQuery != null && fromQuery.isNotEmpty) return fromQuery;
+  return text;
+}
+
+// ---------------------------------------------
 // Cliente HTTP
 // ---------------------------------------------
 
 class ApiClient {
-  ApiClient(this.baseUrl);
+  ApiClient(this.baseUrl, {this.token});
 
   /// Ex.: http://192.168.0.10:5000
   final String baseUrl;
 
-  static const _timeout = Duration(seconds: 6);
+  /// Token da sessão (null = sem login).
+  final String? token;
+
+  bool get loggedIn => token != null && token!.isNotEmpty;
+
+  ApiClient withToken(String? newToken) => ApiClient(baseUrl, token: newToken);
+
+  static const _timeout = Duration(seconds: 8);
 
   /// Aceita "192.168.0.10", "192.168.0.10:5000" ou "http://..." e devolve
   /// sempre no formato completo, usando a porta 5000 se nenhuma for informada.
@@ -260,36 +430,182 @@ class ApiClient {
   Future<Map<String, dynamic>> historyJson(String sensorId) =>
       _get('/api/app/houses/${Uri.encodeComponent(sensorId)}/history');
 
+  // ---------- conta ----------
+
+  Future<Session> login(String email, String password) async {
+    final json = await _json('POST', '/api/auth/login', body: {'email': email, 'password': password});
+    return Session.fromJson(_map(json));
+  }
+
+  Future<void> logout() => _json('POST', '/api/auth/logout');
+
+  Future<AppUser> me() async => AppUser.fromJson(_map(await _json('GET', '/api/auth/me')));
+
+  Future<Session> acceptInvite(String inviteToken, String password) async {
+    final json = await _json(
+      'POST',
+      '/api/auth/invites/accept',
+      body: {'token': inviteToken, 'password': password},
+    );
+    return Session.fromJson(_map(json));
+  }
+
+  Future<void> setPreferences({bool? email, bool? push}) => _json(
+        'PUT',
+        '/api/me/preferences',
+        body: {if (email != null) 'email': email, if (push != null) 'push': push},
+      );
+
+  Future<List<AlertEvent>> myAlerts() async {
+    final json = await _json('GET', '/api/me/alerts');
+    return _list(json).whereType<Map>().map((item) => AlertEvent.fromJson(_map(item))).toList();
+  }
+
+  /// Devolve uma linha por canal, ex.: "email: simulated — SMTP não configurado".
+  Future<List<DeliveryInfo>> sendTestNotification() async {
+    final json = _map(await _json('POST', '/api/me/notifications/test'));
+    return _list(json['results'])
+        .whereType<Map>()
+        .map((item) => DeliveryInfo.fromJson(_map(item)))
+        .toList();
+  }
+
+  Future<void> registerDevice(String deviceToken, String platform) => _json(
+        'POST',
+        '/api/me/devices',
+        body: {'token': deviceToken, 'platform': platform},
+      );
+
+  // ---------- administração ----------
+
+  Future<List<AppUser>> adminUsers() async {
+    final json = await _json('GET', '/api/admin/users');
+    return _list(json).whereType<Map>().map((item) => AppUser.fromJson(_map(item))).toList();
+  }
+
+  Future<List<SensorInfo>> adminSensors() async {
+    final json = await _json('GET', '/api/admin/sensors');
+    return _list(json).whereType<Map>().map((item) => SensorInfo.fromJson(_map(item))).toList();
+  }
+
+  Future<InviteResult> adminCreateUser({
+    required String name,
+    required String email,
+    String? phone,
+    required List<String> sensorIds,
+    required bool emailEnabled,
+    required bool pushEnabled,
+    required String inviteChannel,
+  }) async {
+    final json = _map(await _json('POST', '/api/admin/users', body: {
+      'name': name,
+      'email': email,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      'role': 'morador',
+      'sensor_ids': sensorIds,
+      'notifications': {'email': emailEnabled, 'push': pushEnabled},
+      'invite_channel': inviteChannel,
+    }));
+    return InviteResult.fromJson(_map(json['invite']));
+  }
+
+  Future<void> adminUpdateUser(int userId, Map<String, dynamic> changes) =>
+      _json('PATCH', '/api/admin/users/$userId', body: changes);
+
+  Future<InviteResult> adminResendInvite(int userId, String channel) async {
+    final json = await _json('POST', '/api/admin/users/$userId/invite', body: {'channel': channel});
+    return InviteResult.fromJson(_map(json));
+  }
+
+  // ---------- transporte ----------
+
   Future<Map<String, dynamic>> _get(String path) async {
+    final decoded = await _json('GET', path);
+    if (decoded is Map<String, dynamic>) return decoded;
+    throw ApiException('O servidor respondeu algo que o app não entendeu.');
+  }
+
+  /// Faz a chamada e devolve o JSON decodificado (ou null quando não há corpo).
+  Future<dynamic> _json(String method, String path, {Map<String, dynamic>? body}) async {
     final uri = Uri.tryParse('$baseUrl$path');
     if (uri == null) {
       throw ApiException('O endereço "$baseUrl" não é válido.');
     }
-    final response = await _send(uri);
+    final response = await _send(method, uri, body);
+    final status = response.statusCode;
 
-    if (response.statusCode == 404 && path.startsWith('/api/app/overview')) {
+    dynamic decoded;
+    if (response.bodyBytes.isNotEmpty) {
+      try {
+        // bodyBytes + utf8 garante que acentos ("Área", "Sueli") cheguem certos
+        decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      } on FormatException {
+        decoded = null;
+      }
+    }
+
+    if (status == 401 && path != '/api/auth/login') {
+      throw UnauthorizedException(
+        loggedIn ? 'Sua sessão expirou. Entre novamente.' : 'Entre com sua conta para continuar.',
+      );
+    }
+    if (status == 404 && path.startsWith('/api/app/overview')) {
       throw ApiException(
         'Encontrei o servidor, mas ele não tem as rotas do aplicativo. '
         'Atualize o sistema do computador para a versão 5.',
       );
     }
-    if (response.statusCode != 200) {
-      throw ApiException('O servidor respondeu com erro ${response.statusCode}.');
+    if (status == 404 && (path.startsWith('/api/auth') || path == '/api/me/preferences')) {
+      final detail = _detail(decoded);
+      const outdated = 'Este servidor ainda não tem login. Atualize o sistema do computador.';
+      throw ApiException(detail == null || detail == 'Not Found' ? outdated : detail);
     }
-
-    try {
-      // bodyBytes + utf8 garante que acentos ("Área", "Sueli") cheguem certos
-      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-      if (decoded is Map<String, dynamic>) return decoded;
-    } on FormatException {
-      // cai no erro abaixo
+    if (status < 200 || status >= 300) {
+      throw ApiException(_detail(decoded) ?? 'O servidor respondeu com erro $status.');
     }
-    throw ApiException('O servidor respondeu algo que o app não entendeu.');
+    if (status == 204 || response.bodyBytes.isEmpty) return null;
+    if (decoded == null) {
+      throw ApiException('O servidor respondeu algo que o app não entendeu.');
+    }
+    return decoded;
   }
 
-  Future<http.Response> _send(Uri uri) async {
+  /// Mensagem de erro do FastAPI: {"detail": "texto"} ou {"detail": [{"msg": ...}]}.
+  static String? _detail(dynamic decoded) {
+    if (decoded is! Map) return null;
+    final detail = decoded['detail'];
+    if (detail is String && detail.isNotEmpty) return detail;
+    if (detail is List) {
+      final messages = detail
+          .whereType<Map>()
+          .map((item) => item['msg'])
+          .whereType<String>()
+          .toList();
+      if (messages.isNotEmpty) return messages.join(' ');
+    }
+    return null;
+  }
+
+  Future<http.Response> _send(String method, Uri uri, Map<String, dynamic>? body) async {
+    final headers = <String, String>{
+      'Accept': 'application/json',
+      if (body != null) 'Content-Type': 'application/json',
+      if (loggedIn) 'Authorization': 'Bearer $token',
+    };
+    final payload = body == null ? null : jsonEncode(body);
     try {
-      return await http.get(uri).timeout(_timeout);
+      final Future<http.Response> request;
+      switch (method) {
+        case 'POST':
+          request = http.post(uri, headers: headers, body: payload);
+        case 'PUT':
+          request = http.put(uri, headers: headers, body: payload);
+        case 'PATCH':
+          request = http.patch(uri, headers: headers, body: payload);
+        default:
+          request = http.get(uri, headers: headers);
+      }
+      return await request.timeout(_timeout);
     } on TimeoutException {
       throw ApiException(
         'O servidor em $baseUrl não respondeu a tempo. '

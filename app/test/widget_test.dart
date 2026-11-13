@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:monitor_ruido/api.dart';
 import 'package:monitor_ruido/main.dart';
-import 'package:monitor_ruido/settings.dart';
+import 'package:monitor_ruido/screens/account_screen.dart';
+import 'package:monitor_ruido/screens/admin_screen.dart';
 
 void main() {
   testWidgets('primeira abertura mostra a tela de conexão', (tester) async {
@@ -62,20 +63,67 @@ void main() {
     expect(overview.houses.single.todayReadings, 4);
   });
 
-  test('preserva a configuração de um morador', () {
-    const resident = Resident(
-      id: '1',
-      name: 'Ana',
-      contact: 'ana@example.com',
-      channel: 'email',
-      house: 'Casa 1',
-      enabled: true,
-    );
+  test('lê usuário e sessão devolvidos pelo login', () {
+    final session = Session.fromJson({
+      'token': 'abc123',
+      'user': {
+        'id': 7,
+        'name': 'Ana',
+        'email': 'ana@example.com',
+        'phone': null,
+        'role': 'morador',
+        'active': true,
+        'status': 'ativo',
+        'sensor_ids': ['sensor_ap1', 'sensor_ap3'],
+        'notifications': {'email': false, 'push': true},
+        'devices': 1,
+      },
+    });
+    expect(session.token, 'abc123');
+    expect(session.user.isAdmin, isFalse);
+    expect(session.user.sensorIds, ['sensor_ap1', 'sensor_ap3']);
+    expect(session.user.emailEnabled, isFalse);
+    expect(session.user.pushEnabled, isTrue);
+  });
 
-    final restored = Resident.fromJson(resident.toJson());
-    expect(restored.name, 'Ana');
-    expect(restored.contact, 'ana@example.com');
-    expect(restored.house, 'Casa 1');
-    expect(restored.enabled, isTrue);
+  test('convite simulado não é tratado como enviado', () {
+    final simulated = InviteResult.fromJson({
+      'invite_url': 'http://192.168.0.10:5000/convite?token=XYZ',
+      'delivery': {'channel': 'email', 'status': 'simulated', 'detail': 'SMTP não configurado'},
+    });
+    expect(simulated.delivered, isFalse);
+    final sent = InviteResult.fromJson({
+      'invite_url': 'http://192.168.0.10:5000/convite?token=XYZ',
+      'delivery': {'channel': 'email', 'status': 'sent', 'detail': ''},
+    });
+    expect(sent.delivered, isTrue);
+  });
+
+  test('aceita o link inteiro ou só o código do convite', () {
+    expect(inviteTokenFrom(' http://192.168.0.10:5000/convite?token=AbC-123_x '), 'AbC-123_x');
+    expect(inviteTokenFrom('AbC-123_x'), 'AbC-123_x');
+  });
+
+  test('cliente com token é uma nova instância e sabe se está logado', () {
+    final anonymous = ApiClient('http://10.0.0.5:5000');
+    final logged = anonymous.withToken('t0k3n');
+    expect(anonymous.loggedIn, isFalse);
+    expect(logged.loggedIn, isTrue);
+    expect(logged.baseUrl, anonymous.baseUrl);
+    expect(logged.withToken(null).loggedIn, isFalse);
+  });
+
+  test('valida o formulário de novo morador', () {
+    expect(ResidentDraft.validate(name: '', email: 'ana@example.com'), isNotNull);
+    expect(ResidentDraft.validate(name: 'Ana', email: 'ana'), isNotNull);
+    expect(ResidentDraft.validate(name: 'Ana', email: 'ana@example'), isNotNull);
+    expect(ResidentDraft.validate(name: 'Ana', email: 'ana@example.com'), isNull);
+  });
+
+  test('descreve o resultado de um envio sem dizer que enviou quando foi simulado', () {
+    final simulated = DeliveryInfo.fromJson({'channel': 'push', 'status': 'simulated', 'detail': ''});
+    expect(deliveryLabel(simulated), contains('simulado'));
+    final sent = DeliveryInfo.fromJson({'channel': 'email', 'status': 'sent', 'detail': ''});
+    expect(deliveryLabel(sent), 'E-mail: enviado');
   });
 }

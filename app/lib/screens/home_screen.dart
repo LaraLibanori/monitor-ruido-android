@@ -9,11 +9,13 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../noise_ui.dart';
+import '../session.dart';
 import '../settings.dart';
-import 'admin_screen.dart';
+import 'account_screen.dart';
 import 'connect_screen.dart';
 import 'help_screen.dart';
 import 'house_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.api});
@@ -75,11 +77,40 @@ class _HomeScreenState extends State<HomeScreen> {
           _error = null;
         });
       }
+    } on UnauthorizedException catch (e) {
+      await _requireLogin(e.message);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
       _loading = false;
     }
+  }
+
+  /// Sessão expirada ou servidor que exige login: limpa tudo e pede a senha.
+  Future<void> _requireLogin(String message) async {
+    _timer?.cancel();
+    await SessionStore.clear();
+    await Settings.clearCache();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => LoginScreen(
+          api: widget.api.withToken(null),
+          message: message,
+          mandatory: true,
+        ),
+      ),
+      (route) => false,
+    );
+  }
+
+  void _openAccount() {
+    final api = widget.api;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => api.loggedIn ? AccountScreen(api: api) : LoginScreen(api: api),
+      ),
+    );
   }
 
   void _openSettings() {
@@ -118,11 +149,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _openSettings,
           ),
           IconButton(
-            tooltip: 'Administração',
-            icon: const Icon(Icons.admin_panel_settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const AdminScreen()),
-            ),
+            tooltip: widget.api.loggedIn ? 'Minha conta' : 'Entrar',
+            icon: Icon(widget.api.loggedIn ? Icons.account_circle : Icons.login),
+            onPressed: _openAccount,
           ),
         ],
       ),

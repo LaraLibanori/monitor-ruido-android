@@ -17,9 +17,11 @@ contas, certificados ou dispositivos físicos.
 - [ ] Configurar assinatura Apple e provisioning profile.
 - [ ] Publicar no Google Play Internal Testing.
 - [ ] Publicar no TestFlight.
-- [x] Protótipo local de administração para cadastrar moradores e canal de alerta.
-- [ ] Backend autenticado para administrador, moradores, sensores e permissões.
-- [ ] Integração real de push (FCM) e e-mail com credenciais de produção.
+- [x] Backend autenticado para administrador, moradores, sensores e permissões.
+- [x] App com login, convite, preferências e administração via API.
+- [x] Alertas no servidor com registro de cada envio (modo simulado sem credenciais).
+- [ ] Credenciais SMTP de produção configuradas e e-mail real testado.
+- [ ] Projeto Firebase criado, `firebase_messaging` adicionado ao app e push real testado.
 
 ## Android
 
@@ -89,9 +91,10 @@ flutter build ios --release --no-codesign
 
 ## Segurança antes de distribuição externa
 
-- [ ] API protegida por autenticação.
-- [ ] Tela de administração substituída por endpoints protegidos e controle de papéis.
-- [ ] Convites de moradores com expiração e confirmação de e-mail/telefone.
+- [x] Administração protegida por login e controle de papéis.
+- [x] Convites de moradores com expiração; o contato é confirmado ao aceitar.
+- [ ] `APP_REQUIRE_AUTH=true` no servidor (casas visíveis só após login).
+- [ ] `SECRET_KEY` definida no `.env` do servidor.
 - [ ] Tokens de push armazenados no backend, nunca em texto de apresentação ou código.
 - [ ] HTTPS configurado.
 - [ ] Não permitir acesso aberto à porta do servidor.
